@@ -1,4 +1,4 @@
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, jsonify
 from pymongo import MongoClient
 from bson import json_util
 from json import loads
@@ -30,10 +30,14 @@ def file():
 
         fl.save(filepath)
 
-        query = req.insert_one({"name":body["name"],"email":body["email"],"req_uid":req_uid,"timeStamp":datetime.datetime.now(),"processed":"null","file":filename})
+        query = req.insert_one({"name":body["name"],"email":body["email"],"req_uid":req_uid,"timeStamp":datetime.datetime.now(),"processed":[{"name":"Crocin","quantity":"12"},{"name":"Disprin","quantity":"12"}],"file":filename})
         
+        response = jsonify(msg="File Uploaded",req_id=req_uid, output = [{"name":"Crocin","quantity":"12"},{"name":"Disprin","quantity":"12"}])
 
-        return {"msg":"File Uploaded","req_id":req_uid, "output": "processed data"}
+        # Enable Access-Control-Allow-Origin
+        response.headers.add("Access-Control-Allow-Origin", "*")
+
+        return response 
     else:
         return make_response({"msg":"NOT ALLOWED"},405)
 
@@ -42,7 +46,15 @@ def file():
 def get(id):
     all_data = req.find_one({"req_uid":id})
     json = loads(json_util.dumps(all_data))
-    return {"response":json}
+    res = jsonify(response = json)
+    res.headers.add("Access-Control-Allow-Origin", "*")
+    return res
+
+
+@app.route("/delete")
+def delete():
+    req.delete_many({})
+    return "Deleted"
 
 if(__name__ == "__main__"):
     app.run(debug=True)
